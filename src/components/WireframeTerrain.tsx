@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-function Terrain() {
+function Terrain({ onCreated }: { onCreated: () => void }) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const hasSignaled = useRef(false);
 
-  // Store the base heights so we can animate on top of them
   const { geometry, baseHeights } = useMemo(() => {
     const geo = new THREE.PlaneGeometry(32, 18, 90, 50);
     const positions = geo.attributes.position;
@@ -35,6 +35,12 @@ function Terrain() {
   useFrame((state) => {
     if (!meshRef.current) return;
 
+    // Signal ready after first frame renders
+    if (!hasSignaled.current) {
+      hasSignaled.current = true;
+      onCreated();
+    }
+
     const t = state.clock.elapsedTime;
     const positions = geometry.attributes.position;
 
@@ -42,7 +48,6 @@ function Terrain() {
       const x = positions.getX(i);
       const y = positions.getY(i);
 
-      // Layered slow wind waves
       const wave =
         Math.sin(x * 0.15 + t * 0.4) * 0.3 +
         Math.sin(y * 0.2 + t * 0.3 + 1.0) * 0.2 +
@@ -72,21 +77,19 @@ function Terrain() {
   );
 }
 
-export default function WireframeTerrain() {
+export default function WireframeTerrain({ onReady }: { onReady: () => void }) {
   return (
-    <div className="absolute inset-0 z-0">
-      <Canvas
-        camera={{
-          position: [0, 5, 12],
-          fov: 45,
-          near: 0.1,
-          far: 100,
-        }}
-        gl={{ antialias: true, alpha: true }}
-        style={{ background: "transparent" }}
-      >
-        <Terrain />
-      </Canvas>
-    </div>
+    <Canvas
+      camera={{
+        position: [0, 5, 12],
+        fov: 45,
+        near: 0.1,
+        far: 100,
+      }}
+      gl={{ antialias: true, alpha: true }}
+      style={{ background: "transparent" }}
+    >
+      <Terrain onCreated={onReady} />
+    </Canvas>
   );
 }
