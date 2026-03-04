@@ -1,0 +1,18 @@
+[Unit]
+Description=AiCorp Worker (Flask + Mission Worker)
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/aicorp/backend
+Environment=PATH=/opt/aicorp/backend/venv/bin:/usr/bin
+EnvironmentFile=/opt/aicorp/backend/.env
+ExecStart=/opt/aicorp/backend/venv/bin/python app.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+SETUP STEPS:
+1. Choose/create a Supabase project
+2. Apply migrations in order:
+   - 001_initial_schema.sql (base tables)
+   - 002_corporate_structure.sql (8 agents, projects, briefings, instructions)
+   - 003_llm_skills_hiring.sql (skills system, hiring, model config)
+3. Set up frontend/.env.local (copy from .env.local.example)
+4. Set up backend/.env (copy from .env.example)
+   - Configure at least one LLM provider (OpenAI recommended)
+   - Add OPS_API_SECRET (same value in both .env files)
+5. cd frontend && npm install && vercel deploy
+6. Deploy backend to OVHCloud VPS:
+   - pip install -r requirements.txt
+   - Copy systemd/aicorp-worker.service to /etc/systemd/system/
+   - systemctl enable --now aicorp-worker
+7. Set up VPS crontab (see crontab.example)
+8. Register your projects via POST /api/projects
+9. (Optional) Install Ollama on VPS for free model tier: ollama pull llama3.1:8b

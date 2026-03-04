@@ -1,0 +1,11 @@
+# AiCorp VPS Crontab
+# ====================
+# Add these to your VPS crontab: crontab -e
+
+# Heartbeat: trigger evaluation, reaction processing, stale recovery
+# Runs every 5 minutes
+*/5 * * * * curl -s -H "Authorization: Bearer YOUR_OPS_API_SECRET" -X POST https://your-domain.vercel.app/api/ops/heartbeat >> /var/log/aicorp-heartbeat.log 2>&1
+
+# Worker health check (optional monitoring)
+# Runs every 10 minutes
+*/10 * * * * curl -s http://localhost:5000/health >> /var/log/aicorp-worker-health.log 2>&1
