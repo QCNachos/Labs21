@@ -8,6 +8,7 @@ Setup:
 4. Set GMAIL_USER and GMAIL_APP_PASSWORD in .env
 """
 
+import os
 import smtplib
 import logging
 from email.mime.multipart import MIMEMultipart
@@ -31,7 +32,9 @@ def send_email(to: str, subject: str, html_body: str, text_body: str = "") -> bo
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
-    msg["From"] = f"Labs21 CEO <{user}>"
+    from_name = os.environ.get("GMAIL_FROM_NAME", "Labs21 CEO")
+    msg["From"] = f"{from_name} <{user}>"
+    msg["Reply-To"] = f"{from_name} <{user}>"
     msg["To"] = to
 
     if text_body:
