@@ -1,8 +1,8 @@
 {
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    }
+    { "source": "/api/steps/claim",    "destination": "/api/steps?action=claim" },
+    { "source": "/api/steps/complete", "destination": "/api/steps?action=complete" },
+    { "source": "/api/daily_reports",  "destination": "/api/reports?resource=daily" },
+    { "source": "/api/board_meetings", "destination": "/api/reports?resource=board" }
   ]
 }
