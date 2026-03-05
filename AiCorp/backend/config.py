@@ -37,6 +37,13 @@ class Config:
     # GitHub
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
+    # Gmail (SMTP with App Password)
+    GMAIL_USER = os.getenv("GMAIL_USER")                   # your.address@gmail.com
+    GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")   # 16-char App Password from Google
+
+    # CEO email recipient
+    CEO_EMAIL_TO = os.getenv("CEO_EMAIL_TO")
+
     # Flask
     FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
     FLASK_DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"

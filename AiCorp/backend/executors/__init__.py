@@ -17,6 +17,7 @@ from executors.scan_repos import execute_scan_repos
 from executors.research_investors import execute_research_investors
 from executors.update_deck import execute_update_deck
 from executors.propose_hire import execute_propose_hire
+from executors.send_daily_report import execute_send_daily_report
 
 
 # Registry: step_kind -> executor function
@@ -38,6 +39,8 @@ EXECUTOR_REGISTRY = {
     "update_deck": execute_update_deck,
     # Org management
     "propose_hire": execute_propose_hire,
+    # CEO reporting
+    "send_daily_report": execute_send_daily_report,
 }
 
 

@@ -1,11 +1,24 @@
-# AiCorp VPS Crontab
-# ====================
-# Add these to your VPS crontab: crontab -e
+# Labs21 VPS Crontab
+# Install with: crontab -e
+# Paths assume Python venv at ~/labs21-venv and code at ~/labs21-backend
 
-# Heartbeat: trigger evaluation, reaction processing, stale recovery
-# Runs every 5 minutes
-*/5 * * * * curl -s -H "Authorization: Bearer YOUR_OPS_API_SECRET" -X POST https://your-domain.vercel.app/api/ops/heartbeat >> /var/log/aicorp-heartbeat.log 2>&1
+VENV_PYTHON=/home/ubuntu/labs21-venv/bin/python
+BACKEND_DIR=/home/ubuntu/labs21-backend
 
-# Worker health check (optional monitoring)
-# Runs every 10 minutes
-*/10 * * * * curl -s http://localhost:5000/health >> /var/log/aicorp-worker-health.log 2>&1
+# ─── CEO Reports ────────────────────────────────────────────────────────────
+
+# Daily briefing — every day at 7:00 AM UTC
+0 7 * * *   cd $BACKEND_DIR && $VENV_PYTHON ceo_daily.py daily >> /var/log/labs21/ceo_daily.log 2>&1
+
+# Weekly recap — every Monday at 7:00 AM UTC
+0 7 * * 1   cd $BACKEND_DIR && $VENV_PYTHON ceo_daily.py weekly >> /var/log/labs21/ceo_weekly.log 2>&1
+
+# Monthly board meeting prep — 1st of each month at 7:00 AM UTC
+0 7 1 * *   cd $BACKEND_DIR && $VENV_PYTHON ceo_daily.py monthly >> /var/log/labs21/ceo_monthly.log 2>&1
+
+# ─── Worker Heartbeat ───────────────────────────────────────────────────────
+
+# Trigger heartbeat every 10 minutes (evaluates trigger rules and reactions)
+*/10 * * * *  curl -s -X POST https://labs21.xyz/api/ops/heartbeat \
+              -H "Authorization: Bearer $OPS_API_SECRET" \
+              -H "Content-Type: application/json" >> /var/log/labs21/heartbeat.log 2>&1
