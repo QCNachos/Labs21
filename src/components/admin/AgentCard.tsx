@@ -62,10 +62,10 @@ export function AgentCard({ agent, compact = false, onClick }: AgentCardProps) {
 
           {/* Model + compute info */}
           <div className="flex flex-wrap gap-2 mb-3">
-            {agent.model_name && (
+            {((agent.config as Record<string, string> | undefined)?.model_override || agent.model_name) && (
               <span className="flex items-center gap-1 text-[10px] bg-accent/10 text-accent-light px-2 py-0.5 rounded-full">
                 <Cpu className="w-2.5 h-2.5" />
-                {agent.model_name}
+                {((agent.config as Record<string, string> | undefined)?.model_override ?? agent.model_name ?? "").split(":").slice(1).join(":") || agent.model_name}
               </span>
             )}
             {agent.compute_provider && (

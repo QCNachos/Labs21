@@ -18,7 +18,13 @@ def _with_stats(sb, agents):
         completed = sb.table("ops_missions").select("id", count="exact").eq("agent_slug", slug).eq("status", "succeeded").execute().count or 0
         active = sb.table("ops_missions").select("id", count="exact").eq("agent_slug", slug).in_("status", ["pending", "running"]).execute().count or 0
         events = sb.table("ops_agent_events").select("id", count="exact").eq("agent_slug", slug).gte("created_at", cutoff).execute().count or 0
-        result.append({**agent, "stats": {"completed_missions": completed, "active_missions": active, "events_24h": events}})
+        # Surface model_override from config for convenience
+        model_override = (agent.get("config") or {}).get("model_override", "")
+        result.append({
+            **agent,
+            "model_override": model_override,
+            "stats": {"completed_missions": completed, "active_missions": active, "events_24h": events},
+        })
     return result
 
 

@@ -36,6 +36,21 @@ export const SUBSECTORS_BY_SECTOR: Record<ProjectSector, string[]> = {
   others: ["Others"],
 };
 
+export interface ModelInfo {
+  id: string;
+  label: string;
+  provider: string;
+  tier: "smart" | "fast" | "free";
+  ctx: number;
+  ctx_label: string;
+  cost: string;
+  env: string;
+  env_label: string;
+  description: string;
+  available: boolean;
+  unavailable_reason: string | null;
+}
+
 export interface Agent {
   id: number;
   slug: string;
@@ -51,6 +66,7 @@ export interface Agent {
   status: AgentStatus;
   last_active: string | null;
   config: Record<string, unknown>;
+  model_override?: string;  // surfaced from config.model_override by API
   // Enhanced fields
   model_provider: string | null;
   model_name: string | null;

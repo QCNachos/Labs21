@@ -5,7 +5,8 @@ import { Agent } from "@/types/admin";
 import { apiGet, apiPost, apiPut } from "@/lib/api";
 import { AgentCard } from "@/components/admin/AgentCard";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { Plus, Crown, Server, Cpu, Wallet, X } from "lucide-react";
+import { ModelPicker } from "@/components/admin/ModelPicker";
+import { Plus, Crown, Server, Wallet, X } from "lucide-react";
 
 const DEPARTMENTS = ["executive", "engineering", "growth", "content", "finance", "operations", "legal"];
 
@@ -108,10 +109,17 @@ export default function AgentsPage() {
                 <textarea rows={2} className="w-full bg-surface-900 border border-surface-700 rounded-lg px-3 py-2 text-sm text-surface-100 resize-none focus:outline-none focus:border-accent" value={form.role_desc ?? ""} onChange={(e) => setForm({ ...form, role_desc: e.target.value })} />
               </div>
               <hr className="col-span-2 border-surface-700" />
-              <div className="col-span-2 flex items-center gap-1 text-xs font-semibold text-surface-400 uppercase tracking-wide"><Cpu className="w-3.5 h-3.5" /> Model</div>
-              <Field label="Provider (e.g. Anthropic)" value={form.model_provider ?? ""} onChange={(v) => setForm({ ...form, model_provider: v })} />
-              <Field label="Model name" value={form.model_name ?? ""} onChange={(v) => setForm({ ...form, model_name: v })} />
-              <Field label="Subscription details" value={form.model_subscription ?? ""} onChange={(v) => setForm({ ...form, model_subscription: v })} />
+              <div className="col-span-2 flex items-center gap-1 text-xs font-semibold text-surface-400 uppercase tracking-wide">
+                <Server className="w-3.5 h-3.5" /> Model
+              </div>
+              <div className="col-span-2">
+                <ModelPicker
+                  label="AI Model (sets model_override in config)"
+                  value={(form.config as Record<string, string> | undefined)?.model_override ?? ""}
+                  onChange={(id) => setForm({ ...form, config: { ...(form.config ?? {}), model_override: id } })}
+                />
+              </div>
+              <Field label="Subscription / billing notes" value={form.model_subscription ?? ""} onChange={(v) => setForm({ ...form, model_subscription: v })} placeholder="e.g. Claude Pro $20/mo" />
               <Field label="Daily cost USD" value={form.daily_cost_usd?.toString() ?? ""} onChange={(v) => setForm({ ...form, daily_cost_usd: v ? parseFloat(v) : null })} type="number" />
               <hr className="col-span-2 border-surface-700" />
               <div className="col-span-2 flex items-center gap-1 text-xs font-semibold text-surface-400 uppercase tracking-wide"><Server className="w-3.5 h-3.5" /> Compute</div>

@@ -361,7 +361,14 @@ def run(report_type: str = "daily"):
         system = system_prompt_override + "\n\n" + system
 
     logger.info("Calling LLM to generate report content…")
-    model = f"anthropic:{Config.MODEL_TIER_SMART.split(':')[1]}" if Config.ANTHROPIC_API_KEY else Config.MODEL_TIER_SMART
+    # Smart tier for CEO reports; fall back to fast (Groq) if no premium key
+    if Config.ANTHROPIC_API_KEY:
+        model = Config.MODEL_TIER_SMART
+    elif Config.OPENAI_API_KEY:
+        model = "openai:gpt-4o"
+    else:
+        model = Config.MODEL_TIER_FAST  # Groq free tier
+    logger.info(f"Using model: {model}")
     content = call_llm(system, user_message, model=model, max_tokens=3000)
 
     questions = extract_questions(content)
