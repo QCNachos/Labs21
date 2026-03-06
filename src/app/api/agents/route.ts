@@ -26,10 +26,15 @@ async function withStats(sb: ReturnType<typeof getSupabase>, agents: Record<stri
 }
 
 export async function GET() {
-  const sb = getSupabase();
-  const { data } = await sb.from("ops_agents").select("*").order("id");
-  const result = await withStats(sb, data ?? []);
-  return Response.json(result);
+  try {
+    const sb = getSupabase();
+    const { data, error } = await sb.from("ops_agents").select("*").order("id");
+    if (error) return Response.json({ error: error.message, code: error.code }, { status: 500 });
+    const result = await withStats(sb, data ?? []);
+    return Response.json(result);
+  } catch (e) {
+    return Response.json({ error: String(e) }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {

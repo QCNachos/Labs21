@@ -13,6 +13,7 @@ function fmtCtx(tokens: number): string {
 }
 
 export async function GET() {
+  try { require("@supabase/supabase-js"); } catch (e) { return Response.json({ error: "supabase import failed", detail: String(e) }, { status: 500 }); }
   const result = MODELS.map((m) => {
     const val = process.env[m.env] ?? "";
     const available = Boolean(val.trim());
