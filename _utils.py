@@ -10,8 +10,8 @@ from supabase import create_client, Client
 
 def get_supabase() -> Client:
     """Create a Supabase service-role client."""
-    url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
-    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    url = (os.environ.get("NEXT_PUBLIC_SUPABASE_URL") or "").strip()
+    key = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
     if not url or not key:
         raise ValueError("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY")
     return create_client(url, key)
@@ -21,7 +21,7 @@ def is_authorized() -> bool:
     """Check bearer token against OPS_API_SECRET."""
     auth = request.headers.get("Authorization", "")
     token = auth.replace("Bearer ", "")
-    secret = os.environ.get("OPS_API_SECRET", "")
+    secret = os.environ.get("OPS_API_SECRET", "").strip()
     return bool(secret) and token == secret
 
 
