@@ -1,20 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Department } from "@/types/admin";
-import { apiGet, apiPost, apiPut } from "@/lib/api";
+import { apiPost, apiPut } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { Plus, FolderOpen, ExternalLink, X, Edit2 } from "lucide-react";
 
 export default function DepartmentsPage() {
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: departments = [], loading, reload } = useApi<Department[]>("/departments");
   const [showForm, setShowForm] = useState(false);
   const [editDept, setEditDept] = useState<Department | null>(null);
   const [form, setForm] = useState<Partial<Department>>({});
   const [saving, setSaving] = useState(false);
-
-  const load = () => apiGet<Department[]>("/departments").then((data) => { setDepartments(data); setLoading(false); });
-  useEffect(() => { load(); }, []);
 
   const openNew = () => { setForm({ order_index: (departments.length + 1) * 10 }); setEditDept(null); setShowForm(true); };
   const openEdit = (d: Department) => { setForm({ ...d }); setEditDept(d); setShowForm(true); };
@@ -28,7 +25,7 @@ export default function DepartmentsPage() {
         await apiPost("/departments", form);
       }
       setShowForm(false);
-      load();
+      reload();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Failed to save");
     } finally {

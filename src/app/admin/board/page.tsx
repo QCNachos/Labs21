@@ -1,21 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BoardMeeting } from "@/types/admin";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiPost } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { format } from "date-fns";
 import { Plus, X, ChevronDown, ChevronUp, CheckSquare } from "lucide-react";
 
 export default function BoardPage() {
-  const [meetings, setMeetings] = useState<BoardMeeting[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: meetings = [], loading, reload } = useApi<BoardMeeting[]>("/reports?resource=board");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", date: new Date().toISOString().split("T")[0], summary: "", decisions: "", action_items: "" });
   const [saving, setSaving] = useState(false);
-
-  const load = () => apiGet<BoardMeeting[]>("/reports?resource=board").then((data) => { setMeetings(data); setLoading(false); });
-  useEffect(() => { load(); }, []);
 
   const save = async () => {
     if (!form.title.trim()) return;
@@ -26,7 +23,7 @@ export default function BoardPage() {
       await apiPost("/reports?resource=board", { title: form.title, date: form.date, summary: form.summary, decisions, action_items });
       setShowForm(false);
       setForm({ title: "", date: new Date().toISOString().split("T")[0], summary: "", decisions: "", action_items: "" });
-      load();
+      reload();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Failed to save");
     } finally {

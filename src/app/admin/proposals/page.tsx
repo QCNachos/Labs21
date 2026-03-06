@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { MissionProposal } from "@/types/admin";
-import { apiGet, apiPatch } from "@/lib/api";
+import { apiPatch } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { formatDistanceToNow } from "date-fns";
 import { Check, X, ChevronRight } from "lucide-react";
@@ -10,22 +11,16 @@ import { Check, X, ChevronRight } from "lucide-react";
 const STATUSES = ["all", "pending", "accepted", "rejected"];
 
 export default function ProposalsPage() {
-  const [proposals, setProposals] = useState<MissionProposal[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("pending");
   const [acting, setActing] = useState<string | null>(null);
-
-  const load = () => {
-    const url = filter === "all" ? "/proposals" : `/proposals?status=${filter}`;
-    apiGet<MissionProposal[]>(url).then((data) => { setProposals(data); setLoading(false); });
-  };
-  useEffect(() => { load(); }, [filter]);
+  const apiPath = filter === "all" ? "/proposals" : `/proposals?status=${filter}`;
+  const { data: proposals = [], loading, reload } = useApi<MissionProposal[]>(apiPath);
 
   const decide = async (id: string, action: "approve" | "reject") => {
     setActing(id);
     try {
       await apiPatch("/proposals", { id, action });
-      load();
+      reload();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Failed to update proposal");
     } finally {

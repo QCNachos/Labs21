@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Agent } from "@/types/admin";
-import { apiGet, apiPost, apiPut } from "@/lib/api";
+import { apiPost, apiPut } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { AgentCard } from "@/components/admin/AgentCard";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { ModelPicker } from "@/components/admin/ModelPicker";
@@ -11,20 +12,11 @@ import { Plus, Crown, Server, Wallet, X } from "lucide-react";
 const DEPARTMENTS = ["executive", "engineering", "growth", "content", "finance", "operations", "legal"];
 
 export default function AgentsPage() {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: agents = [], loading, reload } = useApi<Agent[]>("/agents");
   const [selected, setSelected] = useState<Agent | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<Partial<Agent>>({});
   const [saving, setSaving] = useState(false);
-
-  const load = () =>
-    apiGet<Agent[]>("/agents").then((data) => {
-      setAgents(data);
-      setLoading(false);
-    });
-
-  useEffect(() => { load(); }, []);
 
   const openNew = () => { setForm({}); setSelected(null); setShowForm(true); };
   const openEdit = (a: Agent) => { setForm({ ...a }); setSelected(a); setShowForm(true); };
@@ -42,7 +34,7 @@ export default function AgentsPage() {
         await apiPost("/agents", { ...form, slug });
       }
       setShowForm(false);
-      load();
+      reload();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Failed to save agent");
     } finally {

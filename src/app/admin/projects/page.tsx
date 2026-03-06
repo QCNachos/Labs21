@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Project, ProjectSector, SECTOR_LABELS, SUBSECTORS_BY_SECTOR, ProjectStage } from "@/types/admin";
-import { apiGet, apiPost, apiPut } from "@/lib/api";
+import { apiPost, apiPut } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { Plus, Globe, Github, FolderOpen, FileText, X, ExternalLink } from "lucide-react";
 
@@ -14,17 +15,13 @@ function toSlug(name: string): string {
 }
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: projects = [], loading, reload } = useApi<Project[]>("/projects");
   const [activeSector, setActiveSector] = useState<ProjectSector | "all">("all");
   const [showForm, setShowForm] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [form, setForm] = useState<Partial<Project & { website_str: string; github_str: string; drive_str: string; docs_str: string }>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const load = () => apiGet<Project[]>("/projects").then((data) => { setProjects(data); setLoading(false); });
-  useEffect(() => { load(); }, []);
 
   const visible = activeSector === "all" ? projects : projects.filter((p) => p.sector === activeSector);
 
@@ -79,7 +76,7 @@ export default function ProjectsPage() {
         await apiPost("/projects", payload);
       }
       setShowForm(false);
-      load();
+      reload();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to save");
     } finally {

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Mission } from "@/types/admin";
-import { apiGet } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { formatDistanceToNow } from "date-fns";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -10,16 +10,10 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 const STATUSES = ["all", "pending", "running", "succeeded", "failed"];
 
 export default function MissionsPage() {
-  const [missions, setMissions] = useState<Mission[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [expanded, setExpanded] = useState<string | null>(null);
-
-  const load = () => {
-    const url = filter === "all" ? "/missions" : `/missions?status=${filter}`;
-    apiGet<Mission[]>(url).then((data) => { setMissions(data); setLoading(false); });
-  };
-  useEffect(() => { load(); }, [filter]);
+  const apiPath = filter === "all" ? "/missions" : `/missions?status=${filter}`;
+  const { data: missions = [], loading } = useApi<Mission[]>(apiPath);
 
   if (loading) return <div className="flex items-center justify-center h-full text-surface-500 text-sm">Loading…</div>;
 

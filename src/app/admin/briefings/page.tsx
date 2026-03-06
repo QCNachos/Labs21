@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Briefing } from "@/types/admin";
-import { apiGet, apiPatch } from "@/lib/api";
+import { apiPatch } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { formatDistanceToNow } from "date-fns";
 import { CheckCheck, Filter } from "lucide-react";
@@ -10,29 +11,28 @@ import { CheckCheck, Filter } from "lucide-react";
 const TYPES = ["all", "daily", "weekly", "monthly", "alert", "escalation"];
 
 export default function BriefingsPage() {
-  const [briefings, setBriefings] = useState<Briefing[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [localRead, setLocalRead] = useState<Set<string>>(new Set());
 
-  const load = () => {
+  const apiPath = (() => {
     let url = "/comms?resource=briefings&limit=100";
     if (filter !== "all") url += `&type=${filter}`;
     if (unreadOnly) url += "&unread=true";
-    apiGet<Briefing[]>(url).then((data) => { setBriefings(data); setLoading(false); });
-  };
-
-  useEffect(() => { load(); }, [filter, unreadOnly]);
+    return url;
+  })();
+  const { data: rawBriefings = [], loading } = useApi<Briefing[]>(apiPath);
+  const briefings = rawBriefings.map((b) => localRead.has(b.id) ? { ...b, read: true } : b);
 
   const markRead = async (id: string) => {
+    setLocalRead((prev) => new Set([...prev, id]));
     await apiPatch("/comms?resource=briefings", { id, read: true });
-    setBriefings((prev) => prev.map((b) => (b.id === id ? { ...b, read: true } : b)));
   };
 
   const markAllRead = async () => {
     const unread = briefings.filter((b) => !b.read);
+    setLocalRead((prev) => new Set([...prev, ...unread.map((b) => b.id)]));
     await Promise.all(unread.map((b) => apiPatch("/comms?resource=briefings", { id: b.id, read: true })));
-    setBriefings((prev) => prev.map((b) => ({ ...b, read: true })));
   };
 
   const unreadCount = briefings.filter((b) => !b.read).length;

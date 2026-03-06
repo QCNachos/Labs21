@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Agent, Instruction, Project } from "@/types/admin";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiPost } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { formatDistanceToNow } from "date-fns";
 import { Send, ChevronDown } from "lucide-react";
@@ -10,24 +11,16 @@ import { Send, ChevronDown } from "lucide-react";
 const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
 
 export default function CommandPage() {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [instructions, setInstructions] = useState<Instruction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: agents = [], loading: loadingAgents } = useApi<Agent[]>("/agents");
+  const { data: projects = [], loading: loadingProjects } = useApi<Project[]>("/projects");
+  const { data: instructions = [], loading: loadingInstructions, reload: reloadInstructions } = useApi<Instruction[]>("/comms?resource=instructions&limit=50");
+  const loading = loadingAgents || loadingProjects || loadingInstructions;
+
   const [targetAgent, setTargetAgent] = useState("");
   const [instruction, setInstruction] = useState("");
   const [priority, setPriority] = useState<"low" | "normal" | "high" | "urgent">("normal");
   const [projectSlug, setProjectSlug] = useState("");
   const [sending, setSending] = useState(false);
-
-  const load = () =>
-    Promise.all([
-      apiGet<Agent[]>("/agents"),
-      apiGet<Project[]>("/projects"),
-      apiGet<Instruction[]>("/comms?resource=instructions&limit=50"),
-    ]).then(([a, p, i]) => { setAgents(a); setProjects(p); setInstructions(i); setLoading(false); });
-
-  useEffect(() => { load(); }, []);
 
   const send = async () => {
     if (!targetAgent || !instruction.trim()) return;
@@ -35,7 +28,7 @@ export default function CommandPage() {
     try {
       await apiPost("/comms?resource=instructions", { target_agent: targetAgent, instruction, priority, project_slug: projectSlug || null });
       setInstruction("");
-      load();
+      reloadInstructions();
     } catch (e: unknown) {
       alert(e instanceof Error ? e.message : "Failed to send instruction");
     } finally {
