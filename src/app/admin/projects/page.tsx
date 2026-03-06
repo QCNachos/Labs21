@@ -66,15 +66,17 @@ export default function ProjectsPage() {
     setSaving(true);
     setError(null);
     try {
+      // Strip the UI-only helper fields before sending to API
+      const { website_str, github_str, drive_str, docs_str, ...cleanForm } = form;
       const payload = {
-        ...form,
+        ...cleanForm,
         slug,
         links: {
-          ...(form.links ?? {}),
-          ...(form.website_str ? { website: form.website_str } : {}),
-          ...(form.github_str ? { github: form.github_str } : {}),
-          ...(form.drive_str ? { drive_folder: form.drive_str } : {}),
-          ...(form.docs_str ? { docs: form.docs_str } : {}),
+          ...(cleanForm.links ?? {}),
+          ...(website_str ? { website: website_str } : {}),
+          ...(github_str ? { github: github_str } : {}),
+          ...(drive_str ? { drive_folder: drive_str } : {}),
+          ...(docs_str ? { docs: docs_str } : {}),
         },
       };
       if (editProject) {

@@ -67,5 +67,16 @@ def projects():
         project_id = body.pop("id", None)
         if not project_id:
             return jsonify({"error": "id required"}), 400
-        sb.table("ops_projects").update(body).eq("id", project_id).execute()
+        allowed = {
+            "name", "slug", "description", "stage", "sector", "sub_sector",
+            "category", "github_repos", "website_url", "tech_stack", "goals",
+            "financials", "team_notes", "pitch_url", "links", "is_active",
+            "priority", "status", "metadata",
+        }
+        updates = {k: v for k, v in body.items() if k in allowed}
+        if not updates:
+            return jsonify({"error": "No valid fields to update"}), 400
+        res = sb.table("ops_projects").update(updates).eq("id", project_id).execute()
+        if not res.data:
+            return jsonify({"error": "Project not found or update failed"}), 404
         return jsonify({"success": True})
