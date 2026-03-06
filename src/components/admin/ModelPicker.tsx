@@ -9,7 +9,7 @@ export interface ModelInfo {
   id: string;
   label: string;
   provider: string;
-  tier: "smart" | "fast" | "free";
+  tier: "smart" | "fast" | "private" | "free";
   ctx: number;
   ctx_label: string;
   cost: string;
@@ -21,9 +21,10 @@ export interface ModelInfo {
 }
 
 const TIER_CONFIG = {
-  smart: { label: "Smart", icon: Brain, color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
-  fast: { label: "Fast", icon: Zap, color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" },
-  free: { label: "Free", icon: Cpu, color: "text-green-400", bg: "bg-green-500/10 border-green-500/20" },
+  smart:   { label: "Smart",   icon: Brain, color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/20" },
+  fast:    { label: "Fast",    icon: Zap,   color: "text-blue-400",   bg: "bg-blue-500/10 border-blue-500/20"   },
+  private: { label: "Private", icon: Lock,  color: "text-amber-400",  bg: "bg-amber-500/10 border-amber-500/20" },
+  free:    { label: "Free",    icon: Cpu,   color: "text-green-400",  bg: "bg-green-500/10 border-green-500/20" },
 };
 
 interface ModelPickerProps {
@@ -55,9 +56,10 @@ export function ModelPicker({ value, onChange, label = "Model" }: ModelPickerPro
 
   const selected = models.find((m) => m.id === value);
   const grouped = {
-    smart: models.filter((m) => m.tier === "smart"),
-    fast: models.filter((m) => m.tier === "fast"),
-    free: models.filter((m) => m.tier === "free"),
+    smart:   models.filter((m) => m.tier === "smart"),
+    fast:    models.filter((m) => m.tier === "fast"),
+    private: models.filter((m) => m.tier === "private"),
+    free:    models.filter((m) => m.tier === "free"),
   };
 
   return (
@@ -103,7 +105,7 @@ export function ModelPicker({ value, onChange, label = "Model" }: ModelPickerPro
       {/* Dropdown */}
       {open && (
         <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-surface-800 border border-surface-700 rounded-xl shadow-2xl overflow-hidden max-h-[480px] overflow-y-auto admin-scroll">
-          {(["smart", "fast", "free"] as const).map((tier) => {
+          {(["smart", "fast", "private", "free"] as const).map((tier) => {
             const group = grouped[tier];
             if (!group.length) return null;
             const cfg = TIER_CONFIG[tier];
@@ -169,7 +171,7 @@ function ModelRow({ model, selected, onSelect }: { model: ModelInfo; selected: b
   );
 }
 
-function TierBadge({ tier, small = false }: { tier: "smart" | "fast" | "free"; small?: boolean }) {
+function TierBadge({ tier, small = false }: { tier: "smart" | "fast" | "private" | "free"; small?: boolean }) {
   const cfg = TIER_CONFIG[tier];
   const Icon = cfg.icon;
   return (

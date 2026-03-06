@@ -16,6 +16,7 @@ app = make_app(__name__)
 # env:     env var name required
 # ------------------------------------------------------------------
 MODELS = [
+    # ── Smart ──────────────────────────────────────────────────────
     {
         "id": "anthropic:claude-opus-4-6",
         "label": "Claude Opus 4.6",
@@ -36,6 +37,7 @@ MODELS = [
         "env": "OPENAI_API_KEY",
         "description": "OpenAI flagship. Text, images, structured output.",
     },
+    # ── Fast ───────────────────────────────────────────────────────
     {
         "id": "openrouter:qwen/qwen3.5-397b-a17b-20260216",
         "label": "Qwen 3.5 (397B)",
@@ -56,6 +58,28 @@ MODELS = [
         "env": "OPENROUTER_API_KEY",
         "description": "1M context window. Essentially free.",
     },
+    # ── Private (Venice AI — zero logging, no training) ───────────
+    {
+        "id": "venice:llama-3.3-70b",
+        "label": "Llama 3.3 (70B)",
+        "provider": "Venice AI",
+        "tier": "private",
+        "ctx": 128_000,
+        "cost": "~$0.50 / $0.50 per 1M",
+        "env": "VENICE_API_KEY",
+        "description": "Privacy-first. No logging, no training on your data.",
+    },
+    {
+        "id": "venice:mistral-31-24b",
+        "label": "Mistral 3.1 (24B)",
+        "provider": "Venice AI",
+        "tier": "private",
+        "ctx": 128_000,
+        "cost": "~$0.20 / $0.60 per 1M",
+        "env": "VENICE_API_KEY",
+        "description": "Private, fast. Good for financial/legal tasks.",
+    },
+    # ── Free ───────────────────────────────────────────────────────
     {
         "id": "openrouter:qwen/qwen3-32b",
         "label": "Qwen 3 (32B)",
@@ -73,6 +97,7 @@ ENV_LABELS = {
     "OPENAI_API_KEY": "OpenAI",
     "GROQ_API_KEY": "Groq",
     "OPENROUTER_API_KEY": "OpenRouter",
+    "VENICE_API_KEY": "Venice AI",
     "OLLAMA_BASE_URL": "Ollama (local)",
 }
 
