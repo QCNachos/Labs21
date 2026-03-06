@@ -29,13 +29,17 @@ export default function AgentsPage() {
   const openNew = () => { setForm({}); setSelected(null); setShowForm(true); };
   const openEdit = (a: Agent) => { setForm({ ...a }); setSelected(a); setShowForm(true); };
 
+  const toSlug = (name: string) =>
+    name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
   const save = async () => {
     setSaving(true);
     try {
       if (selected) {
         await apiPut("/agents", { ...form, id: selected.id });
       } else {
-        await apiPost("/agents", form);
+        const slug = toSlug(form.name ?? "");
+        await apiPost("/agents", { ...form, slug });
       }
       setShowForm(false);
       load();
@@ -97,8 +101,9 @@ export default function AgentsPage() {
               <button onClick={() => setShowForm(false)} className="text-surface-400 hover:text-surface-200"><X className="w-5 h-5" /></button>
             </div>
             <div className="p-6 grid grid-cols-2 gap-4">
-              <Field label="Slug *" value={form.slug ?? ""} onChange={(v) => setForm({ ...form, slug: v })} disabled={!!selected} />
-              <Field label="Name *" value={form.name ?? ""} onChange={(v) => setForm({ ...form, name: v })} />
+              <div className="col-span-2">
+                <Field label="Name *" value={form.name ?? ""} onChange={(v) => setForm({ ...form, name: v })} />
+              </div>
               <Field label="Title" value={form.title ?? ""} onChange={(v) => setForm({ ...form, title: v })} />
               <SelectField label="Department" value={form.department ?? ""} options={DEPARTMENTS} onChange={(v) => setForm({ ...form, department: v })} />
               <Field label="Reports To (slug)" value={form.reports_to ?? ""} onChange={(v) => setForm({ ...form, reports_to: v })} />
