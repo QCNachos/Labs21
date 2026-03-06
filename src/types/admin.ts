@@ -40,7 +40,7 @@ export interface ModelInfo {
   id: string;
   label: string;
   provider: string;
-  tier: "smart" | "fast" | "free";
+  tier: "smart" | "fast" | "private" | "free";
   ctx: number;
   ctx_label: string;
   cost: string;

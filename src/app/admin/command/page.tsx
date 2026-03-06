@@ -55,7 +55,11 @@ export default function CommandPage() {
             <select value={targetAgent} onChange={(e) => setTargetAgent(e.target.value)}
               className="w-full bg-surface-900 border border-surface-700 rounded-lg px-3 py-2 text-sm text-surface-100 focus:outline-none focus:border-accent">
               <option value="">Select agent…</option>
-              {agents.map((a) => <option key={a.slug} value={a.slug}>{a.name} ({a.slug})</option>)}
+              {agents.map((a) => (
+                <option key={a.slug} value={a.slug}>
+                  {a.name}{a.title ? ` (${a.title})` : ""}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -109,7 +113,9 @@ export default function CommandPage() {
               <div key={inst.id} className="bg-surface-800 border border-surface-700 rounded-xl p-4">
                 <div className="flex items-start justify-between gap-4 mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-surface-300">{inst.target_agent}</span>
+                    <span className="text-xs font-semibold text-surface-300">
+                      {agents.find((a) => a.slug === inst.target_agent)?.name ?? inst.target_agent}
+                    </span>
                     <StatusBadge status={inst.priority} size="sm" />
                     <StatusBadge status={inst.status} size="sm" />
                   </div>
