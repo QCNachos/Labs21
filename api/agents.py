@@ -84,5 +84,5 @@ def _is_auth():
     auth = request.headers.get("Authorization", "")
     token = auth.replace("Bearer ", "").strip()
     import os
-    secret = os.environ.get("OPS_API_SECRET", "")
+    secret = os.environ.get("OPS_API_SECRET", "").strip()
     return bool(secret) and token == secret
