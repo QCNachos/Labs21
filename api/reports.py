@@ -62,8 +62,8 @@ def _daily_reports():
             "content": body["content"],
             "questions": body.get("questions", []),
             "status": body.get("status", "draft"),
-        }).select().single().execute()
-        return jsonify(res.data), 201
+        }).execute()
+        return jsonify(res.data[0] if res.data else {}), 201
 
     if request.method == "PATCH":
         if not _is_auth():
@@ -104,8 +104,8 @@ def _board_meetings():
             "decisions": body.get("decisions", []),
             "action_items": body.get("action_items", []),
             "created_by": body.get("created_by", "board_director"),
-        }).select().single().execute()
-        return jsonify(res.data), 201
+        }).execute()
+        return jsonify(res.data[0] if res.data else {}), 201
 
     if request.method == "PUT":
         if not _is_auth():

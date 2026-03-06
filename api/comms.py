@@ -71,8 +71,8 @@ def _briefings():
             "priority": body.get("priority", "normal"),
             "projects": body.get("projects", []),
             "metadata": body.get("metadata", {}),
-        }).select().single().execute()
-        return jsonify(res.data), 201
+        }).execute()
+        return jsonify(res.data[0] if res.data else {}), 201
 
     if request.method == "PATCH":
         body = request.get_json() or {}

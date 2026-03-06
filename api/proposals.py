@@ -68,19 +68,21 @@ def proposals():
             "metadata": body.get("metadata", {}),
             "status": "accepted" if auto_approve else "pending",
             "decided_at": datetime.now(timezone.utc).isoformat() if auto_approve else None,
-        }).select().single().execute()
+        }).execute()
 
+        proposal_row = proposal.data[0] if proposal.data else {}
         mission_id = None
         if auto_approve:
             mission = sb.table("ops_missions").insert({
-                "proposal_id": proposal.data["id"],
+                "proposal_id": proposal_row["id"],
                 "agent_slug": body["agent_slug"],
                 "title": body["title"],
                 "description": body.get("description"),
                 "priority": body.get("priority", 5),
                 "status": "pending",
-            }).select().single().execute()
-            mission_id = mission.data["id"]
+            }).execute()
+            mission_row = mission.data[0] if mission.data else {}
+            mission_id = mission_row.get("id")
             for i, sk in enumerate(step_kinds):
                 sb.table("ops_mission_steps").insert({
                     "mission_id": mission_id,
@@ -90,9 +92,9 @@ def proposals():
                     "status": "queued",
                     "input": body.get("metadata", {}),
                 }).execute()
-            _emit(sb, body["agent_slug"], "proposal:auto_approved", ["proposal", "auto_approved"], {"proposal_id": proposal.data["id"]})
+            _emit(sb, body["agent_slug"], "proposal:auto_approved", ["proposal", "auto_approved"], {"proposal_id": proposal_row["id"]})
 
-        return jsonify({"success": True, "proposal_id": proposal.data["id"], "mission_id": mission_id, "auto_approved": auto_approve}), 201
+        return jsonify({"success": True, "proposal_id": proposal_row.get("id"), "mission_id": mission_id, "auto_approved": auto_approve}), 201
 
     if request.method == "PATCH":
         if not _is_auth():
@@ -117,17 +119,18 @@ def proposals():
                 "description": proposal.data.get("description"),
                 "priority": proposal.data.get("priority", 5),
                 "status": "pending",
-            }).select().single().execute()
+            }).execute()
+            mission_row = mission.data[0] if mission.data else {}
             for i, sk in enumerate(proposal.data.get("step_kinds", [])):
                 sb.table("ops_mission_steps").insert({
-                    "mission_id": mission.data["id"],
+                    "mission_id": mission_row.get("id"),
                     "agent_slug": proposal.data["agent_slug"],
                     "step_kind": sk,
                     "step_order": i,
                     "status": "queued",
                     "input": proposal.data.get("metadata", {}),
                 }).execute()
-            return jsonify({"success": True, "mission_id": mission.data["id"]})
+            return jsonify({"success": True, "mission_id": mission_row.get("id")})
         else:
             sb.table("ops_mission_proposals").update({
                 "status": "rejected",

@@ -66,8 +66,8 @@ def agents():
             "wallet_address": body.get("wallet_address"),
             "wallet_chain": body.get("wallet_chain"),
             "daily_cost_usd": body.get("daily_cost_usd"),
-        }).select().single().execute()
-        return jsonify(res.data), 201
+        }).execute()
+        return jsonify(res.data[0] if res.data else {}), 201
 
     if request.method == "PUT":
         if not _is_auth():

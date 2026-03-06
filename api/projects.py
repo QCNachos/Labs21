@@ -57,8 +57,8 @@ def projects():
             "is_active": body.get("is_active", True),
             "priority": body.get("priority", 3),
             "status": body.get("status", "active"),
-        }).select().single().execute()
-        return jsonify(res.data), 201
+        }).execute()
+        return jsonify(res.data[0] if res.data else {}), 201
 
     if request.method == "PUT":
         if not _is_auth():

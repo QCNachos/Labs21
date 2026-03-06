@@ -40,8 +40,8 @@ def departments():
             "drive_folder_url": body.get("drive_folder_url"),
             "icon": body.get("icon"),
             "order_index": body.get("order_index", 99),
-        }).select().single().execute()
-        return jsonify(res.data), 201
+        }).execute()
+        return jsonify(res.data[0] if res.data else {}), 201
 
     if request.method == "PUT":
         if not _is_auth():
