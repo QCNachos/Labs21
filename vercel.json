@@ -3,6 +3,8 @@
     { "source": "/api/steps/claim",    "destination": "/api/steps?action=claim" },
     { "source": "/api/steps/complete", "destination": "/api/steps?action=complete" },
     { "source": "/api/daily_reports",  "destination": "/api/reports?resource=daily" },
-    { "source": "/api/board_meetings", "destination": "/api/reports?resource=board" }
+    { "source": "/api/board_meetings", "destination": "/api/reports?resource=board" },
+    { "source": "/api/briefings",      "destination": "/api/comms?resource=briefings" },
+    { "source": "/api/instructions",   "destination": "/api/comms?resource=instructions" }
   ]
 }
