@@ -14,7 +14,7 @@ export default function BoardPage() {
   const [form, setForm] = useState({ title: "", date: new Date().toISOString().split("T")[0], summary: "", decisions: "", action_items: "" });
   const [saving, setSaving] = useState(false);
 
-  const load = () => apiGet<BoardMeeting[]>("/board_meetings").then((data) => { setMeetings(data); setLoading(false); });
+  const load = () => apiGet<BoardMeeting[]>("/reports?resource=board").then((data) => { setMeetings(data); setLoading(false); });
   useEffect(() => { load(); }, []);
 
   const save = async () => {
@@ -22,7 +22,7 @@ export default function BoardPage() {
     try {
       const decisions = form.decisions.split("\n").filter(Boolean).map((d) => ({ item: d.trim(), owner: "Board" }));
       const action_items = form.action_items.split("\n").filter(Boolean).map((a) => ({ task: a.trim(), owner: "TBD" }));
-      await apiPost("/board_meetings", { title: form.title, date: form.date, summary: form.summary, decisions, action_items });
+      await apiPost("/reports?resource=board", { title: form.title, date: form.date, summary: form.summary, decisions, action_items });
       setShowForm(false);
       setForm({ title: "", date: new Date().toISOString().split("T")[0], summary: "", decisions: "", action_items: "" });
       load();

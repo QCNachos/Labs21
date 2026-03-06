@@ -20,7 +20,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     Promise.all([
       apiGet<Agent[]>("/agents"),
-      apiGet<Briefing[]>("/briefings?unread=true&limit=5"),
+      apiGet<Briefing[]>("/comms?resource=briefings&unread=true&limit=5"),
       apiGet<AgentEvent[]>("/events?limit=30"),
       apiGet<MissionProposal[]>("/proposals?status=pending"),
     ]).then(([a, b, e, p]) => {

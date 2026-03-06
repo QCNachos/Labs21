@@ -24,7 +24,7 @@ export default function CommandPage() {
     Promise.all([
       apiGet<Agent[]>("/agents"),
       apiGet<Project[]>("/projects"),
-      apiGet<Instruction[]>("/instructions?limit=50"),
+      apiGet<Instruction[]>("/comms?resource=instructions&limit=50"),
     ]).then(([a, p, i]) => { setAgents(a); setProjects(p); setInstructions(i); setLoading(false); });
 
   useEffect(() => { load(); }, []);
@@ -33,7 +33,7 @@ export default function CommandPage() {
     if (!targetAgent || !instruction.trim()) return;
     setSending(true);
     try {
-      await apiPost("/instructions", { target_agent: targetAgent, instruction, priority, project_slug: projectSlug || null });
+      await apiPost("/comms?resource=instructions", { target_agent: targetAgent, instruction, priority, project_slug: projectSlug || null });
       setInstruction("");
       load();
     } finally {

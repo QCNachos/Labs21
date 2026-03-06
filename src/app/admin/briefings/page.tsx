@@ -16,7 +16,7 @@ export default function BriefingsPage() {
   const [unreadOnly, setUnreadOnly] = useState(false);
 
   const load = () => {
-    let url = "/briefings?limit=100";
+    let url = "/comms?resource=briefings&limit=100";
     if (filter !== "all") url += `&type=${filter}`;
     if (unreadOnly) url += "&unread=true";
     apiGet<Briefing[]>(url).then((data) => { setBriefings(data); setLoading(false); });
@@ -25,13 +25,13 @@ export default function BriefingsPage() {
   useEffect(() => { load(); }, [filter, unreadOnly]);
 
   const markRead = async (id: string) => {
-    await apiPatch("/briefings", { id, read: true });
+    await apiPatch("/comms?resource=briefings", { id, read: true });
     setBriefings((prev) => prev.map((b) => (b.id === id ? { ...b, read: true } : b)));
   };
 
   const markAllRead = async () => {
     const unread = briefings.filter((b) => !b.read);
-    await Promise.all(unread.map((b) => apiPatch("/briefings", { id: b.id, read: true })));
+    await Promise.all(unread.map((b) => apiPatch("/comms?resource=briefings", { id: b.id, read: true })));
     setBriefings((prev) => prev.map((b) => ({ ...b, read: true })));
   };
 
