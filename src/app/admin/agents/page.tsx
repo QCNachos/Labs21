@@ -39,6 +39,8 @@ export default function AgentsPage() {
       }
       setShowForm(false);
       load();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed to save agent");
     } finally {
       setSaving(false);
     }

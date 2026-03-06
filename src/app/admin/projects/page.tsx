@@ -9,6 +9,10 @@ import { Plus, Globe, Github, FolderOpen, FileText, X, ExternalLink } from "luci
 const SECTORS: ProjectSector[] = ["trading", "platforms", "marketing", "art", "others"];
 const STAGES: ProjectStage[] = ["idea", "mvp", "beta", "launched", "scaling"];
 
+function toSlug(name: string): string {
+  return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +20,8 @@ export default function ProjectsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [form, setForm] = useState<Partial<Project & { website_str: string; github_str: string; drive_str: string; docs_str: string }>>({});
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = () => apiGet<Project[]>("/projects").then((data) => { setProjects(data); setLoading(false); });
   useEffect(() => { load(); }, []);
@@ -25,6 +31,7 @@ export default function ProjectsPage() {
   const openNew = () => {
     setForm({ status: "active", stage: "idea", sector: "others", is_active: true, links: {} });
     setEditProject(null);
+    setError(null);
     setShowForm(true);
   };
 
@@ -37,27 +44,47 @@ export default function ProjectsPage() {
       docs_str: p.links?.docs ?? "",
     });
     setEditProject(p);
+    setError(null);
     setShowForm(true);
   };
 
+  const setName = (name: string) => {
+    setForm((f) => ({
+      ...f,
+      name,
+      ...(!editProject && { slug: toSlug(name) }),
+    }));
+  };
+
   const save = async () => {
-    const payload = {
-      ...form,
-      links: {
-        ...(form.links ?? {}),
-        ...(form.website_str ? { website: form.website_str } : {}),
-        ...(form.github_str ? { github: form.github_str } : {}),
-        ...(form.drive_str ? { drive_folder: form.drive_str } : {}),
-        ...(form.docs_str ? { docs: form.docs_str } : {}),
-      },
-    };
-    if (editProject) {
-      await apiPut("/projects", { ...payload, id: editProject.id });
-    } else {
-      await apiPost("/projects", payload);
+    if (!form.name?.trim()) { setError("Name is required"); return; }
+    const slug = form.slug || toSlug(form.name);
+    setSaving(true);
+    setError(null);
+    try {
+      const payload = {
+        ...form,
+        slug,
+        links: {
+          ...(form.links ?? {}),
+          ...(form.website_str ? { website: form.website_str } : {}),
+          ...(form.github_str ? { github: form.github_str } : {}),
+          ...(form.drive_str ? { drive_folder: form.drive_str } : {}),
+          ...(form.docs_str ? { docs: form.docs_str } : {}),
+        },
+      };
+      if (editProject) {
+        await apiPut("/projects", { ...payload, id: editProject.id });
+      } else {
+        await apiPost("/projects", payload);
+      }
+      setShowForm(false);
+      load();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
     }
-    setShowForm(false);
-    load();
   };
 
   const sectorCounts = SECTORS.reduce<Record<string, number>>((acc, s) => {
@@ -105,8 +132,9 @@ export default function ProjectsPage() {
               <button onClick={() => setShowForm(false)}><X className="w-5 h-5 text-surface-400" /></button>
             </div>
             <div className="p-6 grid grid-cols-2 gap-4">
-              <Field label="Name *" value={form.name ?? ""} onChange={(v) => setForm({ ...form, name: v })} />
-              <Field label="Slug *" value={form.slug ?? ""} onChange={(v) => setForm({ ...form, slug: v })} disabled={!!editProject} />
+              <div className="col-span-2">
+                <Field label="Name *" value={form.name ?? ""} onChange={setName} />
+              </div>
               <div className="col-span-2">
                 <label className="block text-xs text-surface-400 mb-1">Description</label>
                 <textarea rows={2} className="w-full bg-surface-900 border border-surface-700 rounded-lg px-3 py-2 text-sm text-surface-100 resize-none focus:outline-none focus:border-accent" value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} />
@@ -126,11 +154,14 @@ export default function ProjectsPage() {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-surface-700 flex justify-end gap-3">
-              <button onClick={() => setShowForm(false)} className="px-4 py-2 text-sm text-surface-400 hover:text-surface-200 transition-colors">Cancel</button>
-              <button onClick={save} className="px-5 py-2 bg-accent hover:bg-accent-dark text-white text-sm rounded-lg transition-colors">
-                {editProject ? "Save Changes" : "Create Project"}
-              </button>
+            <div className="px-6 py-4 border-t border-surface-700 flex items-center justify-between gap-3">
+              {error && <p className="text-xs text-red-400">{error}</p>}
+              <div className="flex gap-3 ml-auto">
+                <button onClick={() => setShowForm(false)} disabled={saving} className="px-4 py-2 text-sm text-surface-400 hover:text-surface-200 transition-colors disabled:opacity-50">Cancel</button>
+                <button onClick={save} disabled={saving} className="px-5 py-2 bg-accent hover:bg-accent-dark text-white text-sm rounded-lg transition-colors disabled:opacity-60">
+                  {saving ? "Saving…" : editProject ? "Save Changes" : "Create Project"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

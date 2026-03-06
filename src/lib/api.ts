@@ -5,7 +5,7 @@
 
 export function authHeaders(): Record<string, string> {
   return {
-    Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPS_API_SECRET ?? ""}`,
+    Authorization: `Bearer ${(process.env.NEXT_PUBLIC_OPS_API_SECRET ?? "").trim()}`,
     "Content-Type": "application/json",
   };
 }

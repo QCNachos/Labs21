@@ -16,7 +16,7 @@ app = make_app(__name__)
 
 def _is_auth():
     auth = request.headers.get("Authorization", "")
-    token = auth.replace("Bearer ", "")
+    token = auth.replace("Bearer ", "").strip()
     secret = os.environ.get("OPS_API_SECRET", "")
     return bool(secret) and token == secret
 

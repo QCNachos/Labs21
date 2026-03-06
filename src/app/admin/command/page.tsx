@@ -36,6 +36,8 @@ export default function CommandPage() {
       await apiPost("/comms?resource=instructions", { target_agent: targetAgent, instruction, priority, project_slug: projectSlug || null });
       setInstruction("");
       load();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed to send instruction");
     } finally {
       setSending(false);
     }

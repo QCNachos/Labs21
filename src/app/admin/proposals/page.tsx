@@ -26,6 +26,8 @@ export default function ProposalsPage() {
     try {
       await apiPatch("/proposals", { id, action });
       load();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed to update proposal");
     } finally {
       setActing(null);
     }

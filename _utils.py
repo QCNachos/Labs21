@@ -20,7 +20,7 @@ def get_supabase() -> Client:
 def is_authorized() -> bool:
     """Check bearer token against OPS_API_SECRET."""
     auth = request.headers.get("Authorization", "")
-    token = auth.replace("Bearer ", "")
+    token = auth.replace("Bearer ", "").strip()
     secret = os.environ.get("OPS_API_SECRET", "").strip()
     return bool(secret) and token == secret
 

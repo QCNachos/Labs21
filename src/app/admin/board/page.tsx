@@ -18,6 +18,7 @@ export default function BoardPage() {
   useEffect(() => { load(); }, []);
 
   const save = async () => {
+    if (!form.title.trim()) return;
     setSaving(true);
     try {
       const decisions = form.decisions.split("\n").filter(Boolean).map((d) => ({ item: d.trim(), owner: "Board" }));
@@ -26,6 +27,8 @@ export default function BoardPage() {
       setShowForm(false);
       setForm({ title: "", date: new Date().toISOString().split("T")[0], summary: "", decisions: "", action_items: "" });
       load();
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : "Failed to save");
     } finally {
       setSaving(false);
     }
