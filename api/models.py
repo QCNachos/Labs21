@@ -82,7 +82,6 @@ ENV_LABELS = {
 def models():
     if request.method == "OPTIONS":
         return "", 204
-
     result = []
     for m in MODELS:
         env_key = m["env"]
