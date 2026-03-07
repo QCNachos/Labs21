@@ -433,7 +433,7 @@ function ProjectDetailModal({ project, onClose, onEdit, onNotesChange }: {
 
 // ── Notes editor (inline in detail modal) ────────────────────────────────────
 
-const NOTE_TAG_CONFIG: Record<NoteTag, { label: string; color: string; icon: React.ElementType }> = {
+const NOTE_TAG_CONFIG: Record<NoteTag, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
   note:   { label: "Note",   color: "text-surface-300 bg-surface-700 border-surface-600",       icon: StickyNote },
   task:   { label: "Task",   color: "text-amber-300 bg-amber-500/10 border-amber-500/20",        icon: CheckSquare },
   prompt: { label: "Prompt", color: "text-purple-300 bg-purple-500/10 border-purple-500/20",    icon: Sparkles },
