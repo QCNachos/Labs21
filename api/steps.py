@@ -93,12 +93,22 @@ def _complete():
 
     now = datetime.now(timezone.utc).isoformat()
 
-    sb.table("ops_mission_steps").update({
+    update_data = {
         "status": status,
         "output": body.get("output"),
         "last_error": body.get("error"),
         "completed_at": now,
-    }).eq("id", step_id).execute()
+    }
+    if body.get("model_used"):
+        update_data["model_used"] = body["model_used"]
+    if body.get("token_count_in"):
+        update_data["token_count_in"] = body["token_count_in"]
+    if body.get("token_count_out"):
+        update_data["token_count_out"] = body["token_count_out"]
+    if body.get("cost_estimate"):
+        update_data["cost_estimate"] = body["cost_estimate"]
+
+    sb.table("ops_mission_steps").update(update_data).eq("id", step_id).execute()
 
     step = sb.table("ops_mission_steps").select("mission_id, agent_slug, step_kind").eq("id", step_id).single().execute()
     if not step.data:

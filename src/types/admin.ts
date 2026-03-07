@@ -241,6 +241,10 @@ export interface MissionStep {
   output: Record<string, unknown> | null;
   last_error: string | null;
   claimed_by: string | null;
+  model_used: string | null;
+  token_count_in: number;
+  token_count_out: number;
+  cost_estimate: number;
   completed_at: string | null;
   created_at: string;
 }
@@ -254,3 +258,80 @@ export interface AgentEvent {
   created_at: string;
   agent?: Agent;
 }
+
+// Templates
+export type TemplateType = "proposal" | "report" | "email" | "estimate" | "general";
+
+export interface Template {
+  id: string;
+  name: string;
+  type: TemplateType;
+  version: number;
+  body: string;
+  variables: TemplateVariable[];
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TemplateVariable {
+  key: string;
+  label: string;
+  default_value?: string;
+}
+
+export interface TemplateRun {
+  id: string;
+  template_id: string;
+  run_id: string | null;
+  rendered_body: string;
+  output_file_url: string | null;
+  variables_used: Record<string, string>;
+  created_at: string;
+}
+
+// Usage tracking
+export interface UsageDaily {
+  id: string;
+  date: string;
+  agent_slug: string | null;
+  model: string | null;
+  tokens_in: number;
+  tokens_out: number;
+  cost_estimate: number;
+  runs_count: number;
+  created_at: string;
+}
+
+export interface UsageSummary {
+  total_tokens_in: number;
+  total_tokens_out: number;
+  total_cost: number;
+  total_runs: number;
+  by_agent: { agent_slug: string; tokens: number; cost: number; runs: number }[];
+  by_model: { model: string; tokens: number; cost: number; runs: number }[];
+  daily: { date: string; tokens: number; cost: number; runs: number }[];
+}
+
+// Integrations
+export type IntegrationProvider = "gmail" | "outlook" | "drive" | "sheets" | "calendar";
+export type IntegrationStatus = "connected" | "disconnected" | "error";
+
+export interface Integration {
+  id: string;
+  provider: IntegrationProvider;
+  status: IntegrationStatus;
+  config: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+// Avatar presets for agents
+export const AGENT_AVATARS: Record<string, string> = {
+  ceo: "/avatars/ceo.svg",
+  cfo: "/avatars/cfo.svg",
+  cmo: "/avatars/cmo.svg",
+  cto: "/avatars/cto.svg",
+  counsel: "/avatars/counsel.svg",
+  default: "/avatars/default.svg",
+};

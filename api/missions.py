@@ -14,6 +14,11 @@ def missions():
         return "", 204
     sb = get_supabase()
 
+    mission_id = request.args.get("id")
+    if mission_id:
+        data = sb.table("ops_missions").select("*, steps:ops_mission_steps(*), agent:ops_agents!agent_slug(slug, name, title)").eq("id", mission_id).execute()
+        return jsonify(data.data or [])
+
     status = request.args.get("status")
     agent = request.args.get("agent")
     limit = int(request.args.get("limit", 100))

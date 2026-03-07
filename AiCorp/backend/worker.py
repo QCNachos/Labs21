@@ -55,16 +55,30 @@ def claim_step() -> dict | None:
         return None
 
 
-def report_completion(step_id: str, status: str, output: dict = None, error: str = None):
-    """Report step completion back to the API.
-    Uses /api/steps/complete (Python serverless) with step_id in body.
-    """
+def report_completion(
+    step_id: str,
+    status: str,
+    output: dict = None,
+    error: str = None,
+    model_used: str = None,
+    token_count_in: int = 0,
+    token_count_out: int = 0,
+    cost_estimate: float = 0.0,
+):
+    """Report step completion back to the API with usage tracking."""
     try:
         payload = {"step_id": step_id, "status": status}
         if output:
             payload["output"] = output
         if error:
             payload["error"] = error
+        if model_used:
+            payload["model_used"] = model_used
+        if token_count_in or token_count_out:
+            payload["token_count_in"] = token_count_in
+            payload["token_count_out"] = token_count_out
+        if cost_estimate:
+            payload["cost_estimate"] = cost_estimate
 
         resp = requests.post(
             f"{Config.OPS_API_URL}/api/steps/complete",
@@ -105,7 +119,22 @@ def execute_step(step: dict):
     try:
         output = executor(sb, step)
         logger.info(f"Step {step_id} ({step_kind}) succeeded")
-        report_completion(step_id, "succeeded", output=output)
+
+        model_used = None
+        tokens_in = 0
+        tokens_out = 0
+        cost = 0.0
+        if isinstance(output, dict):
+            model_used = output.pop("_model_used", None)
+            tokens_in = output.pop("_tokens_in", 0)
+            tokens_out = output.pop("_tokens_out", 0)
+            cost = output.pop("_cost_estimate", 0.0)
+
+        report_completion(
+            step_id, "succeeded", output=output,
+            model_used=model_used, token_count_in=tokens_in,
+            token_count_out=tokens_out, cost_estimate=cost,
+        )
 
     except Exception as e:
         logger.error(f"Step {step_id} ({step_kind}) failed: {e}")

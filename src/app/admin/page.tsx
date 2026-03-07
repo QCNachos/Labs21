@@ -1,36 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Agent, Briefing, AgentEvent, MissionProposal } from "@/types/admin";
-import { apiGet } from "@/lib/api";
+import { useApi } from "@/hooks/useApi";
+import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
 import { AgentCard } from "@/components/admin/AgentCard";
 import { EventFeed } from "@/components/admin/EventFeed";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { formatDistanceToNow } from "date-fns";
-import { Users, Target, Inbox, Activity, Bell, ArrowRight } from "lucide-react";
+import { Users, Target, Inbox, Activity, Bell, ArrowRight, Wifi, WifiOff } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminDashboard() {
-  const [agents, setAgents] = useState<Agent[]>([]);
-  const [briefings, setBriefings] = useState<Briefing[]>([]);
-  const [events, setEvents] = useState<AgentEvent[]>([]);
-  const [proposals, setProposals] = useState<MissionProposal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: agents = [], loading: l1 } = useApi<Agent[]>("/agents");
+  const { data: briefings = [], loading: l2 } = useApi<Briefing[]>("/comms?resource=briefings&unread=true&limit=5");
+  const { data: events = [], loading: l3 } = useApi<AgentEvent[]>("/events?limit=30");
+  const { data: proposals = [], loading: l4 } = useApi<MissionProposal[]>("/proposals?status=pending");
+  const loading = l1 || l2 || l3 || l4;
 
-  useEffect(() => {
-    Promise.all([
-      apiGet<Agent[]>("/agents"),
-      apiGet<Briefing[]>("/comms?resource=briefings&unread=true&limit=5"),
-      apiGet<AgentEvent[]>("/events?limit=30"),
-      apiGet<MissionProposal[]>("/proposals?status=pending"),
-    ]).then(([a, b, e, p]) => {
-      setAgents(a);
-      setBriefings(b);
-      setEvents(e);
-      setProposals(p);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+  const { connected } = useRealtimeEvents([
+    "ops_agent_events",
+    "ops_missions",
+    "ops_mission_proposals",
+    "ops_agents",
+  ]);
 
   const working = agents.filter((a) => a.status === "working" || a.status === "thinking").length;
   const totalMissions = agents.reduce((s, a) => s + (a.stats?.active_missions ?? 0), 0);
@@ -133,8 +125,14 @@ export default function AdminDashboard() {
       <div className="bg-surface-800 border border-surface-700 rounded-xl">
         <div className="flex items-center justify-between px-5 py-3 border-b border-surface-700">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-success pulse-dot" />
-            <h2 className="text-sm font-semibold text-surface-200">Live Signal Feed</h2>
+            {connected ? (
+              <Wifi className="w-3.5 h-3.5 text-green-400" />
+            ) : (
+              <WifiOff className="w-3.5 h-3.5 text-surface-500" />
+            )}
+            <h2 className="text-sm font-semibold text-surface-200">
+              {connected ? "Live Signal Feed" : "Signal Feed"}
+            </h2>
           </div>
           <Link href="/admin/events" className="text-xs text-accent-light hover:underline flex items-center gap-1">All events <ArrowRight className="w-3 h-3" /></Link>
         </div>

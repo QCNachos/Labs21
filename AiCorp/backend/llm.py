@@ -26,6 +26,37 @@ from config import Config
 logger = logging.getLogger("llm")
 
 
+class LLMResult:
+    """Structured result from an LLM call with usage tracking."""
+
+    def __init__(self, text: str, model: str, tokens_in: int = 0, tokens_out: int = 0, cost: float = 0.0):
+        self.text = text
+        self.model = model
+        self.tokens_in = tokens_in
+        self.tokens_out = tokens_out
+        self.cost = cost
+
+    def __str__(self):
+        return self.text
+
+
+COST_PER_1M: dict[str, tuple[float, float]] = {
+    "gpt-5": (1.25, 10.0),
+    "gpt-4o": (2.50, 10.0),
+    "gpt-4o-mini": (0.15, 0.60),
+    "claude-opus-4-6": (5.0, 25.0),
+    "claude-sonnet-4": (3.0, 15.0),
+    "claude-haiku-3.5": (0.25, 1.25),
+}
+
+
+def _estimate_cost(model_name: str, tokens_in: int, tokens_out: int) -> float:
+    for key, (cin, cout) in COST_PER_1M.items():
+        if key in model_name:
+            return (tokens_in * cin + tokens_out * cout) / 1_000_000
+    return 0.0
+
+
 def call_llm(
     system_prompt: str,
     user_message: str,
@@ -34,17 +65,22 @@ def call_llm(
     temperature: float = 0.7,
 ) -> str:
     """
-    Route an LLM call to the appropriate provider based on the model string.
+    Route an LLM call to the appropriate provider. Returns text only.
+    For tracked usage, use call_llm_tracked() instead.
+    """
+    result = call_llm_tracked(system_prompt, user_message, model, max_tokens, temperature)
+    return result.text
 
-    Args:
-        system_prompt: System-level instructions
-        user_message: The user/task message
-        model: "provider:model_name" string. Defaults to MODEL_TIER_SMART.
-        max_tokens: Max response tokens
-        temperature: Sampling temperature
 
-    Returns:
-        The text response from the model.
+def call_llm_tracked(
+    system_prompt: str,
+    user_message: str,
+    model: str | None = None,
+    max_tokens: int = 2048,
+    temperature: float = 0.7,
+) -> LLMResult:
+    """
+    Route an LLM call and return structured result with token usage.
     """
     if not model:
         model = Config.MODEL_TIER_SMART
@@ -108,7 +144,7 @@ def _parse_model_string(model: str) -> tuple[str, str]:
 
 def _call_openai(
     system_prompt: str, user_message: str, model: str, max_tokens: int, temperature: float
-) -> str:
+) -> LLMResult:
     from openai import OpenAI
 
     client = OpenAI(api_key=Config.OPENAI_API_KEY)
@@ -123,12 +159,15 @@ def _call_openai(
         ],
     )
 
-    return response.choices[0].message.content or ""
+    text = response.choices[0].message.content or ""
+    tokens_in = response.usage.prompt_tokens if response.usage else 0
+    tokens_out = response.usage.completion_tokens if response.usage else 0
+    return LLMResult(text, f"openai:{model}", tokens_in, tokens_out, _estimate_cost(model, tokens_in, tokens_out))
 
 
 def _call_anthropic(
     system_prompt: str, user_message: str, model: str, max_tokens: int, temperature: float
-) -> str:
+) -> LLMResult:
     import anthropic
 
     client = anthropic.Anthropic(api_key=Config.ANTHROPIC_API_KEY)
@@ -141,13 +180,15 @@ def _call_anthropic(
         messages=[{"role": "user", "content": user_message}],
     )
 
-    return response.content[0].text
+    text = response.content[0].text
+    tokens_in = response.usage.input_tokens if response.usage else 0
+    tokens_out = response.usage.output_tokens if response.usage else 0
+    return LLMResult(text, f"anthropic:{model}", tokens_in, tokens_out, _estimate_cost(model, tokens_in, tokens_out))
 
 
 def _call_ollama(
     system_prompt: str, user_message: str, model: str, max_tokens: int, temperature: float
-) -> str:
-    """Call a local Ollama instance (free, open-source models)."""
+) -> LLMResult:
     import requests
 
     response = requests.post(
@@ -171,13 +212,15 @@ def _call_ollama(
         raise RuntimeError(f"Ollama error ({response.status_code}): {response.text[:500]}")
 
     data = response.json()
-    return data.get("message", {}).get("content", "")
+    text = data.get("message", {}).get("content", "")
+    tokens_in = data.get("prompt_eval_count", 0)
+    tokens_out = data.get("eval_count", 0)
+    return LLMResult(text, f"ollama:{model}", tokens_in, tokens_out, 0.0)
 
 
 def _call_groq(
     system_prompt: str, user_message: str, model: str, max_tokens: int, temperature: float
-) -> str:
-    """Call Groq API (fast inference for open-source models)."""
+) -> LLMResult:
     from openai import OpenAI
 
     client = OpenAI(
@@ -195,13 +238,15 @@ def _call_groq(
         ],
     )
 
-    return response.choices[0].message.content or ""
+    text = response.choices[0].message.content or ""
+    tokens_in = response.usage.prompt_tokens if response.usage else 0
+    tokens_out = response.usage.completion_tokens if response.usage else 0
+    return LLMResult(text, f"groq:{model}", tokens_in, tokens_out, 0.0)
 
 
 def _call_openrouter(
     system_prompt: str, user_message: str, model: str, max_tokens: int, temperature: float
-) -> str:
-    """Call OpenRouter API (unified access to many models, including free ones)."""
+) -> LLMResult:
     from openai import OpenAI
 
     client = OpenAI(
@@ -219,4 +264,7 @@ def _call_openrouter(
         ],
     )
 
-    return response.choices[0].message.content or ""
+    text = response.choices[0].message.content or ""
+    tokens_in = response.usage.prompt_tokens if response.usage else 0
+    tokens_out = response.usage.completion_tokens if response.usage else 0
+    return LLMResult(text, f"openrouter:{model}", tokens_in, tokens_out, _estimate_cost(model, tokens_in, tokens_out))

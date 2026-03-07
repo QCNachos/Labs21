@@ -1,0 +1,128 @@
+{
+  "update": {
+    "checkOnStart": true,
+    "autoUpdate": false,
+    "channel": "stable"
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "anthropic": {
+        "apiKey": "${ANTHROPIC_API_KEY}"
+      },
+      "openai": {
+        "apiKey": "${OPENAI_API_KEY}"
+      },
+      "openrouter": {
+        "baseUrl": "https://openrouter.ai/api/v1",
+        "apiKey": "${OPENROUTER_API_KEY}"
+      },
+      "minimax": {
+        "baseUrl": "https://api.minimax.io/anthropic",
+        "apiKey": "${MINIMAX_API_KEY}",
+        "api": "anthropic-messages"
+      },
+      "google": {
+        "apiKey": "${GOOGLE_API_KEY}"
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-20250514",
+        "fallbacks": [
+          "anthropic/claude-haiku-4-20250514",
+          "openai/gpt-4o",
+          "minimax/MiniMax-M2.1"
+        ]
+      },
+      "workspace": "~/clawd",
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h",
+        "maxTokens": 150000
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "heartbeat": {
+        "every": "30m"
+      },
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    },
+    "list": [
+      {
+        "id": "ceo",
+        "identity": {
+          "name": "CEO",
+          "theme": "Chief Executive Officer — Labs21",
+          "emoji": "👔"
+        },
+        "model": {
+          "primary": "anthropic/claude-opus-4-5",
+          "fallbacks": ["anthropic/claude-sonnet-4-20250514", "openai/gpt-4o"]
+        }
+      },
+      {
+        "id": "main",
+        "identity": {
+          "name": "Assistant",
+          "theme": "General assistant for Labs21 operations",
+          "emoji": "🐙"
+        }
+      }
+    ]
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "${GATEWAY_TOKEN}"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "provider": "brave",
+        "apiKey": "${BRAVE_SEARCH_KEY}"
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": false,
+      "botToken": "${TELEGRAM_BOT_TOKEN}",
+      "dmPolicy": "pairing",
+      "streamMode": "partial"
+    }
+  },
+  "plugins": {
+    "entries": {}
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "bun"
+    },
+    "entries": {}
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "prefix": "/"
+  },
+  "messages": {
+    "ackReactionScope": "group-mentions",
+    "maxMessageLength": 4096,
+    "splitLongMessages": true
+  }
+}

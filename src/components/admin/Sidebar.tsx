@@ -17,6 +17,8 @@ import {
   Building2,
   CalendarRange,
   Home,
+  BarChart3,
+  FileCode,
 } from "lucide-react";
 
 const navSections = [
@@ -24,6 +26,7 @@ const navSections = [
     label: "Board Director",
     items: [
       { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+      { href: "/admin/request", label: "Request Work", icon: Zap },
       { href: "/admin/briefings", label: "Briefings", icon: Inbox },
       { href: "/admin/command", label: "Command", icon: MessageSquare },
       { href: "/admin/board", label: "Board Meetings", icon: CalendarRange },
@@ -40,6 +43,7 @@ const navSections = [
     label: "Portfolio",
     items: [
       { href: "/admin/projects", label: "Projects", icon: FolderKanban },
+      { href: "/admin/templates", label: "Templates", icon: FileCode },
     ],
   },
   {
@@ -52,7 +56,10 @@ const navSections = [
   },
   {
     label: "System",
-    items: [{ href: "/admin/settings", label: "Settings", icon: Settings }],
+    items: [
+      { href: "/admin/usage", label: "Usage", icon: BarChart3 },
+      { href: "/admin/settings", label: "Settings", icon: Settings },
+    ],
   },
 ];
 

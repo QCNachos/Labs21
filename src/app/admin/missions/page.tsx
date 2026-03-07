@@ -5,7 +5,8 @@ import { Mission } from "@/types/admin";
 import { useApi } from "@/hooks/useApi";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { formatDistanceToNow } from "date-fns";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 const STATUSES = ["all", "pending", "running", "succeeded", "failed"];
 
@@ -56,19 +57,28 @@ export default function MissionsPage() {
                 </div>
               </button>
 
-              {expanded === m.id && m.steps && m.steps.length > 0 && (
+              {expanded === m.id && (
                 <div className="px-5 pb-4 border-t border-surface-700 pt-3">
-                  <div className="space-y-1">
-                    {m.steps.sort((a, b) => a.step_order - b.step_order).map((step) => (
-                      <div key={step.id} className="flex items-center gap-3 py-1.5">
-                        <span className="text-[10px] w-4 text-center text-surface-500">{step.step_order + 1}</span>
-                        <span className="text-xs font-mono text-surface-300">{step.step_kind}</span>
-                        <StatusBadge status={step.status} size="sm" />
-                        {step.last_error && <span className="text-[11px] text-red-400 truncate">{step.last_error}</span>}
-                        {step.completed_at && <span className="text-[10px] text-surface-500 ml-auto">{formatDistanceToNow(new Date(step.completed_at), { addSuffix: true })}</span>}
-                      </div>
-                    ))}
-                  </div>
+                  {m.steps && m.steps.length > 0 && (
+                    <div className="space-y-1 mb-3">
+                      {m.steps.sort((a, b) => a.step_order - b.step_order).map((step) => (
+                        <div key={step.id} className="flex items-center gap-3 py-1.5">
+                          <span className="text-[10px] w-4 text-center text-surface-500">{step.step_order + 1}</span>
+                          <span className="text-xs font-mono text-surface-300">{step.step_kind}</span>
+                          <StatusBadge status={step.status} size="sm" />
+                          {step.last_error && <span className="text-[11px] text-red-400 truncate">{step.last_error}</span>}
+                          {step.completed_at && <span className="text-[10px] text-surface-500 ml-auto">{formatDistanceToNow(new Date(step.completed_at), { addSuffix: true })}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Link
+                    href={`/admin/runs/${m.id}`}
+                    className="inline-flex items-center gap-1.5 text-xs text-accent-light hover:text-accent transition-colors"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    View full run details
+                  </Link>
                 </div>
               )}
             </div>

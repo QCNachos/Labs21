@@ -2,7 +2,7 @@
 Base utilities shared by all executors.
 """
 
-from llm import call_llm, resolve_model_for_agent
+from llm import call_llm, call_llm_tracked, resolve_model_for_agent, LLMResult
 
 
 def get_agent_model(supabase, agent_slug: str, tier_override: str | None = None) -> str:
@@ -56,19 +56,31 @@ def call_agent_llm(
 ) -> str:
     """
     Make an LLM call using the agent's configured model.
-    Automatically loads the agent's assigned skills into the system prompt.
+    Returns text only. Use call_agent_llm_tracked for usage data.
+    """
+    result = call_agent_llm_tracked(supabase, agent_slug, system_prompt, user_message, max_tokens, tier_override)
+    return result.text
 
-    This is the primary function executors should use.
-    It looks up the agent's model config and routes to the right provider.
+
+def call_agent_llm_tracked(
+    supabase,
+    agent_slug: str,
+    system_prompt: str,
+    user_message: str,
+    max_tokens: int = 2048,
+    tier_override: str | None = None,
+) -> LLMResult:
+    """
+    Make an LLM call using the agent's configured model.
+    Returns LLMResult with token counts and cost estimate.
     """
     model = get_agent_model(supabase, agent_slug, tier_override)
 
-    # Load and inject skills
     skills_context = load_agent_skills(supabase, agent_slug)
     if skills_context:
         system_prompt = f"{system_prompt}\n\n{skills_context}"
 
-    return call_llm(system_prompt, user_message, model=model, max_tokens=max_tokens)
+    return call_llm_tracked(system_prompt, user_message, model=model, max_tokens=max_tokens)
 
 
 def emit_event(supabase, agent_slug: str, event_type: str, tags: list, payload: dict):

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { apiPost } from "@/lib/api";
-import { CheckCircle, AlertTriangle, Server, Database, Zap } from "lucide-react";
+import { useApi } from "@/hooks/useApi";
+import { Integration } from "@/types/admin";
+import { CheckCircle, AlertTriangle, Server, Database, Zap, Mail, Plug, ExternalLink } from "lucide-react";
 
 export default function SettingsPage() {
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
@@ -85,6 +87,9 @@ export default function SettingsPage() {
         )}
       </div>
 
+      {/* Integrations */}
+      <IntegrationsSection />
+
       {/* Env vars reference */}
       <div className="bg-surface-800 border border-surface-700 rounded-xl p-5">
         <h2 className="text-sm font-semibold text-surface-200 mb-4">Required Environment Variables</h2>
@@ -97,6 +102,63 @@ export default function SettingsPage() {
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function IntegrationsSection() {
+  const { data: integrations = [] } = useApi<Integration[]>("/admin?resource=integrations");
+
+  const gmailIntegration = integrations.find((i) => i.provider === "gmail");
+  const isGmailConnected = gmailIntegration?.status === "connected";
+
+  const AVAILABLE_INTEGRATIONS = [
+    {
+      provider: "gmail",
+      label: "Gmail",
+      icon: Mail,
+      description: "Read inbox, draft replies, send emails (with approval). Requires GCP OAuth setup.",
+      status: isGmailConnected ? "connected" : "disconnected",
+      setup: "Set GMAIL_OAUTH_CLIENT_ID and GMAIL_OAUTH_CLIENT_SECRET in environment, then visit the OAuth consent URL.",
+    },
+    {
+      provider: "drive",
+      label: "Google Drive",
+      icon: Database,
+      description: "Access and manage files in Google Drive.",
+      status: "disconnected",
+      setup: "Coming in a future update. Currently uses gws CLI for Drive access.",
+    },
+  ];
+
+  return (
+    <div className="bg-surface-800 border border-surface-700 rounded-xl p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <Plug className="w-4 h-4 text-blue-400" />
+        <h2 className="text-sm font-semibold text-surface-200">Integrations</h2>
+      </div>
+      <div className="space-y-3">
+        {AVAILABLE_INTEGRATIONS.map((int_item) => {
+          const Icon = int_item.icon;
+          return (
+            <div key={int_item.provider} className="flex items-start gap-3 p-3 bg-surface-900 border border-surface-700 rounded-lg">
+              <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${int_item.status === "connected" ? "text-green-400" : "text-surface-500"}`} />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-sm font-medium text-surface-200">{int_item.label}</h3>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${int_item.status === "connected" ? "bg-green-500/10 text-green-400" : "bg-surface-700 text-surface-500"}`}>
+                    {int_item.status}
+                  </span>
+                </div>
+                <p className="text-xs text-surface-400">{int_item.description}</p>
+                {int_item.status === "disconnected" && (
+                  <p className="text-[11px] text-surface-500 mt-1.5">{int_item.setup}</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
