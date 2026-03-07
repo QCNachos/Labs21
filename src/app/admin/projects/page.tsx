@@ -26,6 +26,8 @@ function toSlug(name: string): string {
 export default function ProjectsPage() {
   const { data: projects = [], loading, reload } = useApi<Project[]>("/projects");
   const [activeSector, setActiveSector] = useState<ProjectSector | "all">("all");
+  const [activeStage, setActiveStage] = useState<ProjectStage | "all">("all");
+  const [activeStatus, setActiveStatus] = useState<Project["status"] | "all">("all");
   const [viewProject, setViewProject] = useState<Project | null>(null);
 
   const handleNotesChange = async (notes: ProjectNote[]) => {
@@ -109,6 +111,14 @@ export default function ProjectsPage() {
     acc[s] = projects.filter((p) => p.sector === s).length;
     return acc;
   }, {});
+  const stageCounts = STAGES.reduce<Record<string, number>>((acc, s) => {
+    acc[s] = projects.filter((p) => p.stage === s).length;
+    return acc;
+  }, {});
+  const statusCounts = (["active", "paused", "archived"] as const).reduce<Record<string, number>>((acc, s) => {
+    acc[s] = projects.filter((p) => p.status === s).length;
+    return acc;
+  }, {});
 
   if (loading) return <div className="flex items-center justify-center h-full text-surface-500 text-sm">Loading…</div>;
 
@@ -124,12 +134,35 @@ export default function ProjectsPage() {
         </button>
       </div>
 
-      {/* Sector tabs */}
-      <div className="flex gap-2 flex-wrap">
-        <SectorTab label="All" count={projects.length} active={activeSector === "all"} onClick={() => setActiveSector("all")} />
-        {SECTORS.map((s) => (
-          <SectorTab key={s} label={SECTOR_LABELS[s]} count={sectorCounts[s] ?? 0} active={activeSector === s} onClick={() => setActiveSector(s)} />
-        ))}
+      {/* Filters */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] font-semibold text-surface-500 uppercase tracking-wider shrink-0">Sector</span>
+          <div className="flex gap-2 flex-wrap">
+            <SectorTab label="All" count={projects.length} active={activeSector === "all"} onClick={() => setActiveSector("all")} />
+            {SECTORS.map((s) => (
+              <SectorTab key={s} label={SECTOR_LABELS[s]} count={sectorCounts[s] ?? 0} active={activeSector === s} onClick={() => setActiveSector(s)} />
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] font-semibold text-surface-500 uppercase tracking-wider shrink-0">Stage</span>
+          <div className="flex gap-2 flex-wrap">
+            <FilterPill label="All" active={activeStage === "all"} onClick={() => setActiveStage("all")} />
+            {STAGES.map((s) => (
+              <FilterPill key={s} label={s} active={activeStage === s} onClick={() => setActiveStage(s)} count={stageCounts[s] ?? 0} />
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[11px] font-semibold text-surface-500 uppercase tracking-wider shrink-0">Status</span>
+          <div className="flex gap-2 flex-wrap">
+            <FilterPill label="All" active={activeStatus === "all"} onClick={() => setActiveStatus("all")} />
+            {(["active", "paused", "archived"] as const).map((s) => (
+              <FilterPill key={s} label={s} active={activeStatus === s} onClick={() => setActiveStatus(s)} count={statusCounts[s] ?? 0} />
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* Projects grid */}
@@ -623,6 +656,14 @@ function SectorTab({ label, count, active, onClick }: { label: string; count: nu
   return (
     <button onClick={onClick} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${active ? "bg-accent text-white" : "bg-surface-800 text-surface-400 hover:text-surface-200 border border-surface-700"}`}>
       {label} <span className="ml-1 opacity-60">{count}</span>
+    </button>
+  );
+}
+
+function FilterPill({ label, active, onClick, count }: { label: string; active: boolean; onClick: () => void; count?: number }) {
+  return (
+    <button onClick={onClick} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${active ? "bg-accent text-white" : "bg-surface-800 text-surface-400 hover:text-surface-200 border border-surface-700"}`}>
+      {label}{count != null ? ` (${count})` : ""}
     </button>
   );
 }

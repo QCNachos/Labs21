@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Department } from "@/types/admin";
+import { Department, Agent } from "@/types/admin";
 import { apiPost, apiPut } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
-import { Plus, FolderOpen, ExternalLink, X, Edit2 } from "lucide-react";
+import { Plus, FolderOpen, ExternalLink, X, Edit2, Users } from "lucide-react";
 
 export default function DepartmentsPage() {
   const { data: departments = [], loading, reload } = useApi<Department[]>("/departments");
+  const { data: agents = [] } = useApi<Agent[]>("/agents");
   const [showForm, setShowForm] = useState(false);
   const [editDept, setEditDept] = useState<Department | null>(null);
   const [form, setForm] = useState<Partial<Department>>({});
@@ -51,33 +52,51 @@ export default function DepartmentsPage() {
         <div className="text-center py-16 text-surface-500 text-sm">No departments yet</div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
-          {departments.map((d) => (
-            <div key={d.id} className="bg-surface-800 border border-surface-700 hover:border-surface-600 rounded-xl p-5 transition-colors">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  {d.icon ? (
-                    <span className="text-2xl">{d.icon}</span>
-                  ) : (
-                    <div className="w-10 h-10 rounded-lg bg-surface-700 flex items-center justify-center text-surface-300 text-lg font-bold">
-                      {d.name.charAt(0).toUpperCase()}
+          {departments.map((d) => {
+            const deptAgents = agents.filter((a) => a.department?.toLowerCase() === d.name?.toLowerCase());
+            return (
+              <div key={d.id} className="bg-surface-800 border border-surface-700 hover:border-surface-600 rounded-xl p-5 transition-colors">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    {d.icon ? (
+                      <span className="text-2xl">{d.icon}</span>
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-surface-700 flex items-center justify-center text-surface-300 text-lg font-bold">
+                        {d.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-sm font-semibold text-surface-100">{d.name}</h3>
+                      {d.description && <p className="text-xs text-surface-400 mt-0.5">{d.description}</p>}
                     </div>
-                  )}
-                  <div>
-                    <h3 className="text-sm font-semibold text-surface-100">{d.name}</h3>
-                    {d.description && <p className="text-xs text-surface-400 mt-0.5">{d.description}</p>}
                   </div>
+                  <button onClick={() => openEdit(d)} className="text-surface-500 hover:text-surface-300 transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <button onClick={() => openEdit(d)} className="text-surface-500 hover:text-surface-300 transition-colors">
-                  <Edit2 className="w-4 h-4" />
-                </button>
-              </div>
+
+                {deptAgents.length > 0 && (
+                  <div className="mb-3">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-surface-500 uppercase tracking-wider mb-1.5">
+                      <Users className="w-3 h-3" /> Agents ({deptAgents.length})
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {deptAgents.map((a) => (
+                        <span key={a.id} className="inline-flex items-center gap-1 text-xs bg-surface-700 text-surface-200 px-2 py-1 rounded">
+                          {a.name}
+                          {a.title && <span className="text-surface-500">({a.title})</span>}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
               {d.drive_folder_url ? (
                 <a
                   href={d.drive_folder_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-accent-light hover:underline"
+                  className="flex items-center gap-2 text-xs text-accent-light hover:underline mt-3"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <FolderOpen className="w-3.5 h-3.5" />
@@ -85,13 +104,14 @@ export default function DepartmentsPage() {
                   <ExternalLink className="w-3 h-3 opacity-60" />
                 </a>
               ) : (
-                <button onClick={() => openEdit(d)} className="flex items-center gap-2 text-xs text-surface-500 hover:text-surface-300 transition-colors">
+                <button onClick={() => openEdit(d)} className="flex items-center gap-2 text-xs text-surface-500 hover:text-surface-300 transition-colors mt-3">
                   <FolderOpen className="w-3.5 h-3.5" />
                   Add Drive folder link
                 </button>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
