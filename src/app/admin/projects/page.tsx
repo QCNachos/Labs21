@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Project, ProjectSector, SECTOR_LABELS, SUBSECTORS_BY_SECTOR, ProjectStage } from "@/types/admin";
+import { Project, ProjectNote, NoteTag, ProjectSector, SECTOR_LABELS, SUBSECTORS_BY_SECTOR, ProjectStage } from "@/types/admin";
 import { apiPost, apiPut } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
 import { StatusBadge } from "@/components/admin/StatusBadge";
-import { Plus, Globe, Github, FolderOpen, FileText, X, ExternalLink, Edit2, Link } from "lucide-react";
+import { Plus, Globe, Github, FolderOpen, FileText, X, ExternalLink, Edit2, Link, StickyNote, CheckSquare, Sparkles, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 
 const SECTORS: ProjectSector[] = ["trading", "platforms", "marketing", "art", "others"];
@@ -27,6 +27,18 @@ export default function ProjectsPage() {
   const { data: projects = [], loading, reload } = useApi<Project[]>("/projects");
   const [activeSector, setActiveSector] = useState<ProjectSector | "all">("all");
   const [viewProject, setViewProject] = useState<Project | null>(null);
+
+  const handleNotesChange = async (notes: ProjectNote[]) => {
+    if (!viewProject) return;
+    const updated = { ...viewProject, notes };
+    setViewProject(updated);
+    try {
+      await apiPut("/projects", { id: viewProject.id, notes });
+      reload();
+    } catch {
+      // notes already updated locally; will sync on next reload
+    }
+  };
   const [showForm, setShowForm] = useState(false);
   const [editProject, setEditProject] = useState<Project | null>(null);
   const [form, setForm] = useState<Partial<Project & { website_str: string; github_str: string; drive_str: string; docs_str: string }>>({});
@@ -142,6 +154,7 @@ export default function ProjectsPage() {
           project={viewProject}
           onClose={() => setViewProject(null)}
           onEdit={() => openEdit(viewProject)}
+          onNotesChange={handleNotesChange}
         />
       )}
 
@@ -252,10 +265,11 @@ function ProjectCard({ project, onView, onEdit }: {
 
 // ── Project detail modal ──────────────────────────────────────────────────────
 
-function ProjectDetailModal({ project, onClose, onEdit }: {
+function ProjectDetailModal({ project, onClose, onEdit, onNotesChange }: {
   project: Project;
   onClose: () => void;
   onEdit: () => void;
+  onNotesChange: (notes: ProjectNote[]) => void;
 }) {
   const links = project.links ?? {};
   const linkItems = [
@@ -384,7 +398,14 @@ function ProjectDetailModal({ project, onClose, onEdit }: {
             </div>
           )}
 
-          {/* Agents placeholder */}
+          {/* Notes */}
+          <NotesEditor
+            projectId={project.id}
+            notes={project.notes ?? []}
+            onChange={onNotesChange}
+          />
+
+          {/* Agents */}
           <div>
             <SectionLabel>Assigned Agents</SectionLabel>
             <p className="text-xs text-surface-500 italic">Agent assignments will appear here once agents are active on this project.</p>
@@ -406,6 +427,170 @@ function ProjectDetailModal({ project, onClose, onEdit }: {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ── Notes editor (inline in detail modal) ────────────────────────────────────
+
+const NOTE_TAG_CONFIG: Record<NoteTag, { label: string; color: string; icon: React.ElementType }> = {
+  note:   { label: "Note",   color: "text-surface-300 bg-surface-700 border-surface-600",       icon: StickyNote },
+  task:   { label: "Task",   color: "text-amber-300 bg-amber-500/10 border-amber-500/20",        icon: CheckSquare },
+  prompt: { label: "Prompt", color: "text-purple-300 bg-purple-500/10 border-purple-500/20",    icon: Sparkles },
+};
+
+function NotesEditor({ projectId, notes, onChange }: {
+  projectId: string;
+  notes: ProjectNote[];
+  onChange: (notes: ProjectNote[]) => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [newText, setNewText] = useState("");
+  const [newTag, setNewTag] = useState<NoteTag>("note");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+
+  const addNote = () => {
+    if (!newText.trim()) return;
+    const note: ProjectNote = {
+      id: crypto.randomUUID(),
+      text: newText.trim(),
+      tag: newTag,
+      created_at: new Date().toISOString(),
+    };
+    onChange([...notes, note]);
+    setNewText("");
+    setNewTag("note");
+    setAdding(false);
+  };
+
+  const deleteNote = (id: string) => onChange(notes.filter((n) => n.id !== id));
+
+  const startEdit = (n: ProjectNote) => { setEditingId(n.id); setEditText(n.text); };
+
+  const saveEdit = (id: string) => {
+    if (!editText.trim()) return;
+    onChange(notes.map((n) => n.id === id ? { ...n, text: editText.trim() } : n));
+    setEditingId(null);
+  };
+
+  const cycleTag = (id: string) => {
+    const tags: NoteTag[] = ["note", "task", "prompt"];
+    onChange(notes.map((n) => {
+      if (n.id !== id) return n;
+      const next = tags[(tags.indexOf(n.tag) + 1) % tags.length];
+      return { ...n, tag: next };
+    }));
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <SectionLabel>Notes</SectionLabel>
+        {!adding && (
+          <button
+            onClick={() => setAdding(true)}
+            className="flex items-center gap-1 text-[11px] text-surface-500 hover:text-accent-light transition-colors"
+          >
+            <Plus className="w-3 h-3" /> Add note
+          </button>
+        )}
+      </div>
+
+      {/* Existing notes */}
+      {notes.length > 0 && (
+        <div className="space-y-1.5 mb-2">
+          {notes.map((note) => {
+            const cfg = NOTE_TAG_CONFIG[note.tag];
+            const Icon = cfg.icon;
+            return (
+              <div key={note.id} className="group flex items-start gap-2 rounded-lg px-2 py-1.5 hover:bg-surface-700/50 transition-colors">
+                <button
+                  onClick={() => cycleTag(note.id)}
+                  title="Click to change tag"
+                  className={`shrink-0 flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border mt-0.5 transition-colors cursor-pointer ${cfg.color}`}
+                >
+                  <Icon className="w-2.5 h-2.5" />
+                  {cfg.label}
+                </button>
+                <div className="flex-1 min-w-0">
+                  {editingId === note.id ? (
+                    <div className="flex gap-2">
+                      <input
+                        autoFocus
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") saveEdit(note.id); if (e.key === "Escape") setEditingId(null); }}
+                        className="flex-1 bg-surface-900 border border-surface-600 rounded px-2 py-0.5 text-xs text-surface-100 focus:outline-none focus:border-accent"
+                      />
+                      <button onClick={() => saveEdit(note.id)} className="text-[10px] text-accent-light hover:underline">Save</button>
+                      <button onClick={() => setEditingId(null)} className="text-[10px] text-surface-500 hover:text-surface-300">Cancel</button>
+                    </div>
+                  ) : (
+                    <p
+                      onClick={() => startEdit(note)}
+                      className="text-xs text-surface-300 cursor-text hover:text-surface-100 transition-colors leading-relaxed"
+                    >
+                      {note.text}
+                    </p>
+                  )}
+                </div>
+                {editingId !== note.id && (
+                  <button
+                    onClick={() => deleteNote(note.id)}
+                    className="opacity-0 group-hover:opacity-100 shrink-0 p-0.5 text-surface-600 hover:text-red-400 transition-all"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add form */}
+      {adding && (
+        <div className="bg-surface-900 border border-surface-700 rounded-lg p-3 space-y-2">
+          <textarea
+            autoFocus
+            rows={2}
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) addNote(); if (e.key === "Escape") { setAdding(false); setNewText(""); } }}
+            placeholder="Write a note, task, or prompt…"
+            className="w-full bg-transparent text-sm text-surface-100 placeholder:text-surface-600 resize-none focus:outline-none"
+          />
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1.5">
+              {(["note", "task", "prompt"] as NoteTag[]).map((t) => {
+                const cfg = NOTE_TAG_CONFIG[t];
+                const Icon = cfg.icon;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setNewTag(t)}
+                    className={`flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded border transition-all ${newTag === t ? cfg.color : "text-surface-600 bg-transparent border-surface-700 hover:border-surface-600"}`}
+                  >
+                    <Icon className="w-2.5 h-2.5" />{cfg.label}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => { setAdding(false); setNewText(""); }} className="text-xs text-surface-500 hover:text-surface-300 transition-colors">Cancel</button>
+              <button onClick={addNote} disabled={!newText.trim()} className="text-xs text-white bg-accent hover:bg-accent-dark px-3 py-1 rounded transition-colors disabled:opacity-40">
+                Add
+              </button>
+            </div>
+          </div>
+          <p className="text-[10px] text-surface-600">⌘↵ to add · Esc to cancel</p>
+        </div>
+      )}
+
+      {notes.length === 0 && !adding && (
+        <p className="text-xs text-surface-600 italic">No notes yet. Add context, tasks, or agent prompts.</p>
+      )}
     </div>
   );
 }

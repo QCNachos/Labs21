@@ -100,6 +100,15 @@ export interface ProjectLinks {
   [key: string]: string | undefined;
 }
 
+export type NoteTag = "note" | "task" | "prompt";
+
+export interface ProjectNote {
+  id: string;
+  text: string;
+  tag: NoteTag;
+  created_at: string;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -125,6 +134,7 @@ export interface Project {
   priority: number;
   status: ProjectStatus;
   metadata: Record<string, unknown>;
+  notes: ProjectNote[];
   created_at: string;
   updated_at: string;
 }

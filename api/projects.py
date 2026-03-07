@@ -71,7 +71,7 @@ def projects():
             "name", "slug", "description", "stage", "sector", "sub_sector",
             "category", "github_repos", "website_url", "tech_stack", "goals",
             "financials", "team_notes", "pitch_url", "links", "is_active",
-            "priority", "status", "metadata",
+            "priority", "status", "metadata", "notes",
         }
         updates = {k: v for k, v in body.items() if k in allowed}
         if not updates:
